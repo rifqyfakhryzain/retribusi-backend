@@ -14,12 +14,25 @@ const prosesLogin = async (username, password) => {
   }
 
   const token = jwt.sign(
-    { id: user.id, username: user.username },
+    {
+      id: user.id,
+      username: user.username,
+      nama: user.nama,
+      role: user.role,
+    },
     process.env.JWT_SECRET,
     { expiresIn: "1h" },
   );
 
-  return token;
+  return {
+    token,
+    user: {
+      id: user.id,
+      nama: user.nama,
+      username: user.username,
+      role: user.role,
+    },
+  };
 };
 
 module.exports = { prosesLogin };
