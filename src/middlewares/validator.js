@@ -3,9 +3,13 @@ const validate = (schema) => (req, res, next) => {
     schema.parse(req.body);
     next();
   } catch (error) {
-    return res
-      .status(400)
-      .json({ status: "error", message: error.errors[0].message });
+    const issue = error.issues?.[0] || error.errors?.[0];
+    const message = issue ? issue.message : error.message;
+
+    return res.status(400).json({
+      status: "error",
+      message: message,
+    });
   }
 };
 
