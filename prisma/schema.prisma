@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,17 +8,36 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 enum Role {
   ADMIN
   PETUGAS
 }
 
 model user {
-  id Int @id @default(autoincrement())
-  nama String
-  username String @unique
-  password String
-  role Role @default(PETUGAS)
+  id         Int      @id @default(autoincrement())
+  nama       String
+  username   String   @unique
+  password   String
+  role       Role     @default(PETUGAS)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+enum LantaiKios {
+  BASEMENT
+  LANTAI_1
+  LANTAI_2
+}
+
+model kios {
+  id              Int        @id @default(autoincrement())
+  kode_kios       String     @unique // Contoh: "K-BSM-01", "K-LT1-12"
+  nama_pemilik    String     // Nama pedagang
+  jenis_dagangan  String     // Misal: "Sayur Mayur", "Daging Ayam", "Pakaian"
+  lantai          LantaiKios @default(LANTAI_1)
+  tarif_retribusi Float      @default(5000) // Tarif harian (Rp 5.000)
+  qr_token        String     @db.Text       // Token digital signature yang tersimpan
+  created_at      DateTime   @default(now())
+  updated_at      DateTime   @updatedAt
 }
