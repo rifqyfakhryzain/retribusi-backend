@@ -10,4 +10,14 @@ const loginPetugas = async (req, res) => {
   }
 };
 
-module.exports = { loginPetugas };
+const getProfile = async (req, res) => {
+  res.json({
+    status: "success",
+    message: "Profil pengguna berhasil diambil",
+    data: {
+      user: req.user,
+    },
+  });
+};
+
+module.exports = { loginPetugas, getProfile };
