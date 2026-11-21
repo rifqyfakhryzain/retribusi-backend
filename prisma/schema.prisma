@@ -15,13 +15,14 @@ enum Role {
 }
 
 model user {
-  id         Int      @id @default(autoincrement())
+  id         Int                   @id @default(autoincrement())
   nama       String
-  username   String   @unique
+  username   String                @unique
   password   String
-  role       Role     @default(PETUGAS)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  role       Role                  @default(PETUGAS)
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+  transaksi  transaksi_retribusi[]
 }
 
 enum LantaiKios {
@@ -31,13 +32,37 @@ enum LantaiKios {
 }
 
 model kios {
-  id              Int        @id @default(autoincrement())
-  kode_kios       String     @unique // Contoh: "K-BSM-01", "K-LT1-12"
-  nama_pemilik    String     // Nama pedagang
-  jenis_dagangan  String     // Misal: "Sayur Mayur", "Daging Ayam", "Pakaian"
-  lantai          LantaiKios @default(LANTAI_1)
-  tarif_retribusi Float      @default(5000) // Tarif harian (Rp 5.000)
-  qr_token        String     @db.Text       // Token digital signature yang tersimpan
-  created_at      DateTime   @default(now())
-  updated_at      DateTime   @updatedAt
+  id              Int                   @id @default(autoincrement())
+  kode_kios       String                @unique // Contoh: "K-BSM-01", "K-LT1-12"
+  nama_pemilik    String                // Nama pedagang
+  jenis_dagangan  String                // Misal: "Sayur Mayur", "Daging Ayam", "Pakaian"
+  lantai          LantaiKios            @default(LANTAI_1)
+  tarif_retribusi Float                 @default(5000) // Tarif harian (Rp 5.000)
+  qr_token        String                @db.Text       // Token digital signature yang tersimpan
+  created_at      DateTime              @default(now())
+  updated_at      DateTime              @updatedAt
+  transaksi       transaksi_retribusi[]
+}
+
+enum StatusTransaksi {
+  LUNAS
+  DITOLAK
+}
+
+model transaksi_retribusi {
+  id                 Int             @id @default(autoincrement())
+  kios_id            Int
+  user_id            Int
+  nominal            Float
+  latitude           Float
+  longitude          Float
+  accuracy           Float
+  is_geofence_valid  Boolean         @default(false)
+  is_basement_bypass Boolean         @default(false)
+  status             StatusTransaksi @default(LUNAS)
+  catatan            String?
+  created_at         DateTime        @default(now())
+
+  kios               kios            @relation(fields: [kios_id], references: [id], onDelete: Cascade)
+  petugas            user            @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
