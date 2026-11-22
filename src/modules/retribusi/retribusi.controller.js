@@ -78,6 +78,7 @@ const getRiwayatPetugas = async (req, res) => {
  */
 const getAllTransactions = async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate");
     const list = await retribusiService.getAllTransactions();
 
     return res.status(200).json({
@@ -98,6 +99,7 @@ const getAllTransactions = async (req, res) => {
  */
 const getStatistikHariIni = async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate");
     const statistik = await retribusiService.getStatistikHariIni();
 
     return res.status(200).json({
