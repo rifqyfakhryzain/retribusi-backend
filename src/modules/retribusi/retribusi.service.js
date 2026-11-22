@@ -110,18 +110,28 @@ const bayarRetribusi = async ({
 };
 
 /**
- * Mengambil Riwayat Transaksi Penagihan Petugas Tertentu
+ * Mengambil Riwayat Transaksi Penagihan Petugas Tertentu (Khusus Hari Ini Saja)
  */
 const getRiwayatPetugas = async (userId) => {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
   const list = await prisma.transaksi_retribusi.findMany({
     where: {
       user_id: userId,
       status: "LUNAS",
+      created_at: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
     },
     orderBy: {
       created_at: "desc",
     },
-    take: 50,
+    take: 100,
     include: {
       kios: true,
     },
@@ -147,13 +157,29 @@ const getRiwayatPetugas = async (userId) => {
 
 /**
  * Mengambil Seluruh Transaksi untuk Dasbor Monitoring Real-Time (Admin UPTD)
+ * Mendukung filter tanggal spesifik (format YYYY-MM-DD) dan batas limit
  */
-const getAllTransactions = async (limit = 50) => {
-  const list = await prisma.transaksi_retribusi.findMany({
+const getAllTransactions = async (param = {}) => {
+  let limit = typeof param === "number" ? param : param?.limit;
+  let tanggal = typeof param === "object" ? param?.tanggal : undefined;
+
+  let whereClause = {};
+
+  if (tanggal) {
+    const [year, month, day] = tanggal.split("-").map(Number);
+    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+    whereClause.created_at = {
+      gte: startOfDay,
+      lte: endOfDay,
+    };
+  }
+
+  const queryOptions = {
+    where: whereClause,
     orderBy: {
       created_at: "desc",
     },
-    take: limit,
     include: {
       kios: true,
       petugas: {
@@ -164,7 +190,13 @@ const getAllTransactions = async (limit = 50) => {
         },
       },
     },
-  });
+  };
+
+  if (limit) {
+    queryOptions.take = Number(limit);
+  }
+
+  const list = await prisma.transaksi_retribusi.findMany(queryOptions);
 
   return list.map((item) => ({
     id: item.id,
@@ -187,13 +219,23 @@ const getAllTransactions = async (limit = 50) => {
 
 /**
  * Statistik Ringkasan Harian (Untuk Monitor & Dasbor)
+ * Mendukung parameter tanggal spesifik (YYYY-MM-DD), default ke hari ini
  */
-const getStatistikHariIni = async () => {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+const getStatistikHariIni = async (tanggal) => {
+  let startOfDay;
+  let endOfDay;
 
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+  if (tanggal) {
+    const [year, month, day] = tanggal.split("-").map(Number);
+    startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+  } else {
+    startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+  }
 
   const transaksiHariIni = await prisma.transaksi_retribusi.findMany({
     where: {
@@ -213,11 +255,15 @@ const getStatistikHariIni = async () => {
     (t) => t.status === "DITOLAK",
   ).length;
 
+  const yyyy = startOfDay.getFullYear();
+  const mm = String(startOfDay.getMonth() + 1).padStart(2, "0");
+  const dd = String(startOfDay.getDate()).padStart(2, "0");
+
   return {
     total_transaksi_lunas: totalLunas.length,
     total_nominal_terkumpul: totalNominal,
     total_fraud_ditolak: totalFraudDitolak,
-    tanggal: startOfDay.toISOString().split("T")[0],
+    tanggal: `${yyyy}-${mm}-${dd}`,
   };
 };
 
