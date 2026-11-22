@@ -75,11 +75,13 @@ const getRiwayatPetugas = async (req, res) => {
 
 /**
  * Controller: Seluruh Log Transaksi untuk Dasbor Monitoring Admin UPTD
+ * Mendukung query params: ?tanggal=YYYY-MM-DD & limit=100
  */
 const getAllTransactions = async (req, res) => {
   try {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate");
-    const list = await retribusiService.getAllTransactions();
+    const { tanggal, limit } = req.query;
+    const list = await retribusiService.getAllTransactions({ tanggal, limit });
 
     return res.status(200).json({
       status: "success",
@@ -96,11 +98,13 @@ const getAllTransactions = async (req, res) => {
 
 /**
  * Controller: Ringkasan Statistik Transaksi
+ * Mendukung query params: ?tanggal=YYYY-MM-DD (default: hari ini)
  */
 const getStatistikHariIni = async (req, res) => {
   try {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate");
-    const statistik = await retribusiService.getStatistikHariIni();
+    const { tanggal } = req.query;
+    const statistik = await retribusiService.getStatistikHariIni(tanggal);
 
     return res.status(200).json({
       status: "success",
