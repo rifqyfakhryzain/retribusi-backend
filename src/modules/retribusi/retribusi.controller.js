@@ -10,9 +10,11 @@ const bayarRetribusi = async (req, res) => {
   try {
     const { qr_token, latitude, longitude, accuracy } = req.body;
     const userId = req.user.id;
+    const namaPetugas = req.user.nama || req.user.username || "Petugas";
 
     const result = await retribusiService.bayarRetribusi({
       userId,
+      namaPetugas,
       qr_token,
       latitude: Number(latitude),
       longitude: Number(longitude),
