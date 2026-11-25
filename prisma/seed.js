@@ -4,12 +4,15 @@ const seedUsers = require("./seeds/user.seed.js");
 const seedKios = require("./seeds/kios.seed.js");
 
 async function main() {
-  console.log("=== Menjalankan Seeder Database e-Retribusi ===");
+  console.log("Menjalankan Seeder Database e-Retribusi");
+
+  console.log(" Membersihkan data riwayat transaksi lama.");
+  await prisma.transaksi_retribusi.deleteMany();
 
   await seedUsers();
   await seedKios();
 
-  console.log("=== Semua Seeder Berhasil Dijalankan! ===");
+  console.log("Semua Seeder Berhasil Dijalankan!");
 }
 
 main()
