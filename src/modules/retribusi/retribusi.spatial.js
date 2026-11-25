@@ -57,7 +57,7 @@ function isPointInPolygon(point, polygon) {
  * Pengecekan toleransi penyangga jarak (Buffer Haversine)
  * Dukungan Mode Pengujian Meja Kerja (DEV_MODE)
  */
-function validateGeofence(latitude, longitude) {
+function validateGeofence(latitude, longitude, namaPetugas = "Petugas") {
   const point = [latitude, longitude];
 
   // Uji Poligon Resmi Pasar Cicalengka
@@ -113,9 +113,10 @@ function validateGeofence(latitude, longitude) {
   }
 
   // Gagal: Berada di Luar Radius
+  const officerName = namaPetugas || "Petugas";
   return {
     isValid: false,
-    reason: `Peringatan Fraud: Lokasi Anda berjarak ${(distToCenter / 1000).toFixed(2)} km dari Pasar Cicalengka!`,
+    reason: `Peringatan Fraud: Lokasi (${officerName}) berjarak ${(distToCenter / 1000).toFixed(2)} km dari Pasar Cicalengka!`,
     distanceToCenter: distToCenter,
   };
 }
