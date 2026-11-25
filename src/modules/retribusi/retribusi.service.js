@@ -8,6 +8,7 @@ const { DEFAULT_MAX_ACCURACY } = require("./retribusi.constant.js");
  */
 const bayarRetribusi = async ({
   userId,
+  namaPetugas,
   qr_token,
   latitude,
   longitude,
@@ -25,44 +26,32 @@ const bayarRetribusi = async ({
     );
   }
 
-  let isGeofenceValid = false;
-  let isBasementBypass = false;
-  let catatan = "";
+  // Komputasi Algoritma Spasial (Ray Casting Point-in-Polygon) - Wajib untuk Seluruh Kios / Lantai
+  const geoResult = validateGeofence(latitude, longitude, namaPetugas);
 
-  // Logika Bypass Khusus Kios Lantai Basement (Blindspot Satelit)
-  if (kios.is_basement) {
-    isGeofenceValid = true;
-    isBasementBypass = true;
-    catatan =
-      "Bypass Geofence Otomatis: Kios berada di zona Basement (Blindspot Satelit)";
-  } else {
-    // Komputasi Algoritma Spasial (Ray Casting Point-in-Polygon)
-    const geoResult = validateGeofence(latitude, longitude);
+  if (!geoResult.isValid) {
+    // Catat log transaksi yang ditolak untuk kebutuhan investigasi audit anti-fraud
+    await prisma.transaksi_retribusi.create({
+      data: {
+        kios_id: kios.id,
+        user_id: userId,
+        nominal: kios.tarif,
+        latitude,
+        longitude,
+        accuracy,
+        is_geofence_valid: false,
+        is_basement_bypass: false,
+        status: "DITOLAK",
+        catatan: geoResult.reason,
+      },
+    });
 
-    if (!geoResult.isValid) {
-      // Catat log transaksi yang ditolak untuk kebutuhan investigasi audit anti-fraud
-      await prisma.transaksi_retribusi.create({
-        data: {
-          kios_id: kios.id,
-          user_id: userId,
-          nominal: kios.tarif,
-          latitude,
-          longitude,
-          accuracy,
-          is_geofence_valid: false,
-          is_basement_bypass: false,
-          status: "DITOLAK",
-          catatan: geoResult.reason,
-        },
-      });
-
-      throw new Error(geoResult.reason);
-    }
-
-    isGeofenceValid = true;
-    isBasementBypass = false;
-    catatan = geoResult.reason;
+    throw new Error(geoResult.reason);
   }
+
+  const isGeofenceValid = true;
+  const isBasementBypass = false;
+  const catatan = geoResult.reason;
 
   // Simpan Transaksi Sah ke Neon PostgreSQL
   const transaksi = await prisma.transaksi_retribusi.create({
